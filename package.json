@@ -1,0 +1,29 @@
+{
+  "name": "elm-tac-toe",
+  "author": "Ricardo Casares",
+  "description": "Playing TicTacToe with Elm",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "postinstall": "elm-tooling install",
+    "dev": "vite",
+    "prebuild": "elm-tooling install",
+    "build": "vite build",
+    "serve": "vite preview",
+    "lint": "elm-review",
+    "test": "elm-test-rs",
+    "upgrade": "elm-json upgrade && cd review && elm-json upgrade && cd .."
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "daisyui": "^4.12.10",
+    "elm-debug-transformer": "^1.2.1",
+    "elm-review": "^2.10.3",
+    "elm-tooling": "^1.15.0",
+    "postcss": "8.4.35",
+    "tailwindcss": "^3.4.4",
+    "vite": "^5.1.2",
+    "vite-plugin-elm": "^3.0.0"
+  }
+}
