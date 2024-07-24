@@ -80,14 +80,14 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "flex flex-col gap-2 max-h-svh aspect-square m-auto p-2" ]
+    div [ class "flex flex-col h-full" ]
         [ div
             [ class "navbar bg-base-300"
             ]
             [ div
                 [ class "navbar-start"
                 ]
-                [ span [ class "btn btn-sm btn-ghost text-xl" ]
+                [ span [ class "btn btn-ghost text-xl" ]
                     [ case model.game of
                         On ->
                             div [] [ text "TicTacToe" ]
@@ -97,7 +97,7 @@ view model =
 
                         Won player ->
                             div [ class "flex gap-2 items-center" ]
-                                [ cellRenderer (Taken player)
+                                [ blankOrPlayer (Taken player)
                                 , text "Wins"
                                 ]
                     ]
@@ -105,17 +105,22 @@ view model =
             , div
                 [ class "navbar-end"
                 ]
-                [ button [ class "btn btn-xs btn-accent", onClick Reset, disabled (model.game == On) ] [ text "Play again" ]
+                [ button [ class "btn btn-accent", onClick Reset, disabled (model.game == On) ] [ text "Play again" ]
                 , themeSelector
                 ]
             ]
-        , div [ class "flex-1 aspect-square grid grid-cols-3 grid-rows-3 gap-2" ] (boardView model)
+        , div [ class "flex aspect-square grid grid-cols-3 grid-rows-3 gap-2 p-2" ] (boardView model)
         ]
 
 
 boardView : Model -> List (Html Msg)
 boardView model =
-    List.indexedMap (\a b -> cellView b (b /= Blank || model.game /= On) (CellClicked a)) model.board
+    List.indexedMap (\a b -> cellView b (enabledCell model b) (CellClicked a)) model.board
+
+
+enabledCell : Model -> Cell -> Bool
+enabledCell m c =
+    c /= Blank || m.game /= On
 
 
 cellView : Cell -> Bool -> msg -> Html msg
@@ -123,17 +128,18 @@ cellView cell taken msg =
     button
         [ class "text-[6rem] btn h-full align-middle"
         , class "bg-accent font-mono leading-10"
+        , Attr.attribute "aria-label" "Cell"
         , onClick msg
         , disabled taken
         ]
-        [ cellRenderer cell ]
+        [ blankOrPlayer cell ]
 
 
-cellRenderer : Cell -> Html msg
-cellRenderer cell =
+blankOrPlayer : Cell -> Html msg
+blankOrPlayer cell =
     case cell of
         Taken p ->
-            playerToken p
+            playerView p
 
         Blank ->
             text ""
@@ -200,8 +206,8 @@ updateBoard cell model =
     }
 
 
-playerToken : Player -> Html msg
-playerToken player =
+playerView : Player -> Html msg
+playerView player =
     case player of
         O ->
             span [ class "text-primary" ] [ Icons.o ]
@@ -214,11 +220,13 @@ themeSelector : Html msg
 themeSelector =
     button
         [ Attr.class "dropdown dropdown-end"
+        , Attr.attribute "aria-label" "Theme selector"
         ]
         [ div
             [ Attr.tabindex 0
             , Attr.attribute "role" "button"
-            , Attr.class "btn btn-xs btn-ghost m-1"
+            , Attr.class "btn btn-ghost m-1"
+            , Attr.attribute "aria-label" "Theme selector"
             ]
             [ Icons.themes
             , Icons.arrow
@@ -231,7 +239,7 @@ themeSelector =
                 [ input
                     [ Attr.type_ "radio"
                     , Attr.name "theme-dropdown"
-                    , Attr.class "theme-controller btn btn-xs btn-block btn-ghost justify-start"
+                    , Attr.class "theme-controller btn btn-block btn-ghost justify-start"
                     , Attr.attribute "aria-label" "Light"
                     , Attr.value "light"
                     ]
@@ -241,7 +249,7 @@ themeSelector =
                 [ input
                     [ Attr.type_ "radio"
                     , Attr.name "theme-dropdown"
-                    , Attr.class "theme-controller btn btn-xs btn-block btn-ghost justify-start"
+                    , Attr.class "theme-controller btn btn-block btn-ghost justify-start"
                     , Attr.attribute "aria-label" "Cyberpunk"
                     , Attr.value "cyberpunk"
                     ]
@@ -251,7 +259,7 @@ themeSelector =
                 [ input
                     [ Attr.type_ "radio"
                     , Attr.name "theme-dropdown"
-                    , Attr.class "theme-controller btn btn-xs btn-block btn-ghost justify-start"
+                    , Attr.class "theme-controller btn btn-block btn-ghost justify-start"
                     , Attr.attribute "aria-label" "Wireframe"
                     , Attr.value "wireframe"
                     ]
@@ -261,7 +269,7 @@ themeSelector =
                 [ input
                     [ Attr.type_ "radio"
                     , Attr.name "theme-dropdown"
-                    , Attr.class "theme-controller btn btn-xs btn-block btn-ghost justify-start"
+                    , Attr.class "theme-controller btn btn-block btn-ghost justify-start"
                     , Attr.attribute "aria-label" "Dracula"
                     , Attr.value "dracula"
                     ]
@@ -271,7 +279,7 @@ themeSelector =
                 [ input
                     [ Attr.type_ "radio"
                     , Attr.name "theme-dropdown"
-                    , Attr.class "theme-controller btn btn-xs btn-block btn-ghost justify-start"
+                    , Attr.class "theme-controller btn btn-block btn-ghost justify-start"
                     , Attr.attribute "aria-label" "Black"
                     , Attr.value "black"
                     ]
