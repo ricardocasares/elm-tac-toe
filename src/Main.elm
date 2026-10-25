@@ -82,12 +82,12 @@ view : Model -> Html Msg
 view model =
     div [ class "flex flex-col h-full" ]
         [ div
-            [ class "navbar bg-base-300"
+            [ class "navbar mondrian-header"
             ]
             [ div
                 [ class "navbar-start"
                 ]
-                [ span [ class "btn btn-ghost text-xl" ]
+                [ span [ class "mondrian-title px-4" ]
                     [ case model.game of
                         On ->
                             div [] [ text "TicTacToe" ]
@@ -105,11 +105,11 @@ view model =
             , div
                 [ class "navbar-end"
                 ]
-                [ button [ class "btn btn-accent", onClick Reset, disabled (model.game == On) ] [ text "Play again" ]
+                [ button [ class "btn btn-accent border-4 border-neutral font-black uppercase tracking-widest", onClick Reset, disabled (model.game == On) ] [ text "Play again" ]
                 , themeSelector
                 ]
             ]
-        , div [ class "flex aspect-square grid grid-cols-3 grid-rows-3 gap-2 p-2" ] (boardView model)
+        , div [ class "mondrian-board" ] (boardView model)
         ]
 
 
@@ -126,8 +126,7 @@ enabledCell m c =
 cellView : Cell -> Bool -> msg -> Html msg
 cellView cell taken msg =
     button
-        [ class "text-[6rem] btn h-full align-middle"
-        , class "bg-accent font-mono leading-10"
+        [ class "mondrian-cell"
         , Attr.attribute "aria-label" "Cell"
         , onClick msg
         , disabled taken
@@ -210,10 +209,10 @@ playerView : Player -> Html msg
 playerView player =
     case player of
         O ->
-            span [ class "text-primary" ] [ Icons.o ]
+            span [ class "mark-o" ] [ Icons.o ]
 
         X ->
-            span [ class "text-secondary" ] [ Icons.x ]
+            span [ class "mark-x" ] [ Icons.x ]
 
 
 themeSelector : Html msg
@@ -236,6 +235,17 @@ themeSelector =
             , Attr.class "dropdown-content bg-base-300 rounded z-[1] w-52 p-2 shadow-2xl"
             ]
             [ li []
+                [ input
+                    [ Attr.type_ "radio"
+                    , Attr.name "theme-dropdown"
+                    , Attr.class "theme-controller btn btn-block btn-ghost justify-start"
+                    , Attr.attribute "aria-label" "Mondrian"
+                    , Attr.value "mondrian"
+                    , Attr.checked True
+                    ]
+                    []
+                ]
+            , li []
                 [ input
                     [ Attr.type_ "radio"
                     , Attr.name "theme-dropdown"

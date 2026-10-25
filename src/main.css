@@ -6,3 +6,75 @@ html,
 body {
   @apply h-dvh;
 }
+
+/* Modern art: De Stijl / Mondrian composition */
+body {
+  @apply font-display bg-base-100 text-base-content;
+}
+
+.mondrian-header {
+  @apply border-b-8 border-neutral text-neutral;
+  background: linear-gradient(
+    90deg,
+    theme("colors.base-100") 0 60%,
+    #fac901 60% 62%,
+    #fac901 62% 78%,
+    #111 78% 80%,
+    #d40920 80% 100%
+  );
+}
+
+.mondrian-title {
+  @apply text-2xl font-black uppercase tracking-[0.25em];
+}
+
+.mondrian-board {
+  @apply grid flex-1 grid-cols-3 grid-rows-3 gap-0 bg-neutral p-0;
+  /* thick black lattice drawn by the gaps */
+  gap: 8px;
+  border: 8px solid #111;
+}
+
+.mondrian-cell {
+  @apply h-full w-full cursor-pointer rounded-none border-0 bg-base-100 text-[6rem] leading-none transition-colors duration-150;
+}
+
+/* asymmetric colour blocks, like a Mondrian canvas */
+.mondrian-cell:nth-child(1) { background: #d40920; }
+.mondrian-cell:nth-child(6) { background: #1d3fa8; }
+.mondrian-cell:nth-child(8) { background: #fac901; }
+.mondrian-cell:nth-child(1):disabled,
+.mondrian-cell:nth-child(6):disabled,
+.mondrian-cell:nth-child(8):disabled {
+  opacity: 1;
+}
+
+.mondrian-cell:not(:disabled):hover {
+  background: #fac901;
+}
+
+.mondrian-cell:disabled {
+  @apply cursor-default;
+}
+
+.mondrian-cell svg path,
+.mondrian-cell svg circle {
+  stroke-width: 3;
+}
+
+.mondrian-cell svg {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+.mondrian-cell .mark-x { color: #d40920; }
+.mondrian-cell .mark-o { color: #1d3fa8; }
+/* keep marks legible on the coloured blocks */
+.mondrian-cell:nth-child(1) .mark-x,
+.mondrian-cell:nth-child(1) .mark-o,
+.mondrian-cell:nth-child(6) .mark-x,
+.mondrian-cell:nth-child(6) .mark-o,
+.mondrian-cell:nth-child(8) .mark-x,
+.mondrian-cell:nth-child(8) .mark-o {
+  color: #111;
+}
