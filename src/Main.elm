@@ -1,55 +1,20 @@
-module Main exposing (main)
+module Main exposing (Model, Msg, init, main, update, view)
 
 import Browser
+import Game exposing (Cell(..), Game, Player(..), Status(..))
 import Html exposing (Html, button, div, input, li, span, text, ul)
-import Html.Attributes as Attr exposing (class, disabled)
+import Html.Attributes as Attr exposing (class, classList, disabled)
 import Html.Events exposing (onClick)
 import Icons
 
 
-type Player
-    = X
-    | O
-
-
-type Cell
-    = Blank
-    | Taken Player
-
-
-type alias Board =
-    List Cell
-
-
-type Game
-    = On
-    | Draw
-    | Won Player
-
-
 type alias Model =
-    { game : Game
-    , turn : Player
-    , board : Board
-    }
+    Game
 
 
 type Msg
     = Reset
     | CellClicked Int
-
-
-winningConfigs : List (List number)
-winningConfigs =
-    [ [ 0, 1, 2 ]
-    , [ 0, 3, 6 ]
-    , [ 1, 4, 7 ]
-    , [ 2, 5, 8 ]
-    , [ 3, 4, 5 ]
-    , [ 6, 7, 8 ]
-    , [ 2, 4, 6 ]
-    , [ 0, 4, 8 ]
-    ]
 
 
 main : Program () Model Msg
@@ -59,10 +24,7 @@ main =
 
 init : Model
 init =
-    { turn = X
-    , game = On
-    , board = List.repeat 9 Blank
-    }
+    Game.new
 
 
 update : Msg -> Model -> Model
@@ -72,10 +34,7 @@ update msg model =
             init
 
         CellClicked cell ->
-            model
-                |> updateBoard cell
-                |> updateGame
-                |> changeTurn
+            Game.play cell model
 
 
 view : Model -> Html Msg
@@ -87,123 +46,111 @@ view model =
             [ div
                 [ class "navbar-start"
                 ]
-                [ span [ class "btn btn-ghost text-xl" ]
-                    [ case model.game of
-                        On ->
-                            div [] [ text "TicTacToe" ]
-
-                        Draw ->
-                            div [] [ text "Draw" ]
-
-                        Won player ->
-                            div [ class "flex gap-2 items-center" ]
-                                [ blankOrPlayer (Taken player)
-                                , text "Wins"
-                                ]
-                    ]
-                ]
+                [ statusView (Game.status model) ]
             , div
                 [ class "navbar-end"
                 ]
-                [ button [ class "btn btn-accent", onClick Reset, disabled (model.game == On) ] [ text "Play again" ]
+                [ button [ class "btn btn-accent", onClick Reset ] [ text "New game" ]
                 , themeSelector
                 ]
             ]
-        , div [ class "flex aspect-square grid grid-cols-3 grid-rows-3 gap-2 p-2" ] (boardView model)
+        , div
+            -- The largest square that fits under the 4.5rem navbar, so nothing scrolls.
+            [ class "mx-auto aspect-square w-[min(100vw,calc(100dvh-4.5rem))] grid grid-cols-3 grid-rows-3 gap-2 p-2" ]
+            (boardView model)
         ]
 
 
-boardView : Model -> List (Html Msg)
-boardView model =
-    List.indexedMap (\a b -> cellView b (enabledCell model b) (CellClicked a)) model.board
+statusView : Status -> Html msg
+statusView status =
+    div
+        [ class "flex gap-2 items-center px-4 text-xl font-semibold"
+        , Attr.attribute "role" "status"
+        ]
+        (case status of
+            Playing player ->
+                [ playerView player, text (playerName player ++ " to move") ]
+
+            Won player _ ->
+                [ playerView player, text (playerName player ++ " wins") ]
+
+            Draw ->
+                [ text "Draw" ]
+        )
 
 
-enabledCell : Model -> Cell -> Bool
-enabledCell m c =
-    c /= Blank || m.game /= On
+boardView : Game -> List (Html Msg)
+boardView game =
+    let
+        status : Status
+        status =
+            Game.status game
+    in
+    List.indexedMap (cellView status) (Game.board game)
 
 
-cellView : Cell -> Bool -> msg -> Html msg
-cellView cell taken msg =
+cellView : Status -> Int -> Cell -> Html Msg
+cellView status index cell =
+    let
+        ( isOver, isWinning ) =
+            case status of
+                Playing _ ->
+                    ( False, False )
+
+                Won _ winningCells ->
+                    ( True, List.member index winningCells )
+
+                Draw ->
+                    ( True, False )
+    in
     button
-        [ class "text-[6rem] btn h-full align-middle"
-        , class "bg-accent font-mono leading-10"
-        , Attr.attribute "aria-label" "Cell"
-        , onClick msg
-        , disabled taken
+        [ class "btn h-full [&_svg]:size-16 sm:[&_svg]:size-24"
+        , classList
+            [ ( "bg-accent", not isOver )
+            , ( "!bg-success", isWinning )
+            , ( "opacity-50", isOver && not isWinning )
+            ]
+        , Attr.attribute "aria-label" (cellLabel index cell)
+        , onClick (CellClicked index)
+        , disabled (cell /= Blank || isOver)
         ]
-        [ blankOrPlayer cell ]
+        [ cellContent cell ]
 
 
-blankOrPlayer : Cell -> Html msg
-blankOrPlayer cell =
+cellLabel : Int -> Cell -> String
+cellLabel index cell =
+    "Row "
+        ++ String.fromInt (index // 3 + 1)
+        ++ ", column "
+        ++ String.fromInt (modBy 3 index + 1)
+        ++ ": "
+        ++ (case cell of
+                Blank ->
+                    "empty"
+
+                Taken player ->
+                    playerName player
+           )
+
+
+cellContent : Cell -> Html msg
+cellContent cell =
     case cell of
-        Taken p ->
-            playerView p
+        Taken player ->
+            playerView player
 
         Blank ->
             text ""
 
 
-changeTurn : Model -> Model
-changeTurn model =
-    case model.turn of
+playerName : Player -> String
+playerName player =
+    case player of
         X ->
-            { model | turn = O }
+            "X"
 
         O ->
-            { model | turn = X }
-
-
-updateGame : Model -> Model
-updateGame model =
-    let
-        moves : List Int
-        moves =
-            List.foldr (listOfMovesIndexes model.turn) [] (List.indexedMap Tuple.pair model.board)
-
-        hasWon : Bool
-        hasWon =
-            compareMovesAgainstWinningConfigs moves
-    in
-    if hasWon then
-        { model | game = Won model.turn }
-
-    else if List.length moves == 5 then
-        { model | game = Draw }
-
-    else
-        model
-
-
-compareMovesAgainstWinningConfigs : List Int -> Bool
-compareMovesAgainstWinningConfigs moves =
-    List.any (\cfg -> List.all (\move -> List.member move moves) cfg) winningConfigs
-
-
-listOfMovesIndexes : Player -> ( Int, Cell ) -> List Int -> List Int
-listOfMovesIndexes player ( idx, cell ) list =
-    if cell == Taken player then
-        idx :: list
-
-    else
-        list
-
-
-updateBoard : Int -> Model -> Model
-updateBoard cell model =
-    { model
-        | board =
-            List.indexedMap
-                (\a b ->
-                    if a == cell && b == Blank then
-                        Taken model.turn
-
-                    else
-                        b
-                )
-                model.board
-    }
+            "O"
 
 
 playerView : Player -> Html msg
